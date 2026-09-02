@@ -21,7 +21,7 @@ Example request:
 
 > I'm free tonight. Pick three interesting streams for me and show them on TubeSaku.
 
-![Live Schedule Result Sample]("./images/live-schedule.png")
+![Live Schedule Result Sample]("images/live-schedule.png")
 
 ### 2. Cover-song Planner
 
@@ -31,7 +31,7 @@ Example request:
 Example request:
 
 > I'm a small VTuber planning my next Japanese cover. Find songs that are popular in Japan but not too crowded with recent cover uploads, then create a listening shortlist on TubeSaku.
-![Cover Planner Result Sample]("./images/cover-planner.png")
+![Cover Planner Result Sample]("images/cover-planner.png")
 
 ## Why this is useful
 
