@@ -1,0 +1,61 @@
+{
+  "timezone": "Asia/Tokyo",
+  "streams": [
+    {
+      "video_id": "demo0000001",
+      "channel_id": "UCDEMO0001",
+      "channel_title": "星乃ルナ / Hoshino Luna",
+      "title": "【初配信】はじめまして！夜空から来ました",
+      "category_id": "24",
+      "category_name": "エンターテイメント",
+      "scheduled_start": "2026-09-01T20:00:00+09:00",
+      "is_debut_candidate": true,
+      "debut_reason": "Sample data: no prior live stream found",
+      "thumbnail_url": "",
+      "youtube_url": "https://www.youtube.com/",
+      "channel_url": "https://www.youtube.com/"
+    },
+    {
+      "video_id": "demo0000002",
+      "channel_id": "UCDEMO0002",
+      "channel_title": "朝霧ミオ",
+      "title": "【初配信】ゲームと雑談、はじめます！",
+      "category_id": "20",
+      "category_name": "ゲーム",
+      "scheduled_start": "2026-09-01T21:00:00+09:00",
+      "is_debut_candidate": true,
+      "debut_reason": "Sample data: debut candidate",
+      "thumbnail_url": "",
+      "youtube_url": "https://www.youtube.com/",
+      "channel_url": "https://www.youtube.com/"
+    },
+    {
+      "video_id": "demo0000003",
+      "channel_id": "UCDEMO0003",
+      "channel_title": "Nagi Music Room",
+      "title": "初めての歌枠 / First Singing Stream",
+      "category_id": "10",
+      "category_name": "音楽",
+      "scheduled_start": "2026-09-01T22:00:00+09:00",
+      "is_debut_candidate": true,
+      "debut_reason": "Sample data: debut candidate",
+      "thumbnail_url": "",
+      "youtube_url": "https://www.youtube.com/",
+      "channel_url": "https://www.youtube.com/"
+    },
+    {
+      "video_id": "demo0000004",
+      "channel_id": "UCDEMO0004",
+      "channel_title": "Kuma Game Lab",
+      "title": "深夜のインディーゲーム実況",
+      "category_id": "20",
+      "category_name": "ゲーム",
+      "scheduled_start": "2026-09-01T22:30:00+09:00",
+      "is_debut_candidate": false,
+      "debut_reason": null,
+      "thumbnail_url": "",
+      "youtube_url": "https://www.youtube.com/",
+      "channel_url": "https://www.youtube.com/"
+    }
+  ]
+}

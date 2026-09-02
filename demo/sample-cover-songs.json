@@ -1,0 +1,37 @@
+{
+  "songs": [
+    {
+      "song_id": "204ad9dab4c5",
+      "title": "You!Joy!Parade!",
+      "artists": "M!LK",
+      "chart_demand_score": 91,
+      "charts": {"weekly": 10},
+      "recent_cover_count": 1,
+      "signals": ["low_supply", "shorts_growth"],
+      "playlist_videos": [{"video_id": "jybL_3Eyo8Y", "title": "M!LKのYou!Joy!Parade!を歌ってみた", "channel_title": "Marcus Kley マーカス・クレイ", "duration_seconds": 37, "view_count": 1033}]
+    },
+    {
+      "song_id": "f436b0a8e716",
+      "title": "見知らぬ糸",
+      "artists": "スピッツ",
+      "chart_demand_score": 80.2,
+      "charts": {"trending": 9, "weekly": 14},
+      "recent_cover_count": 2,
+      "existing_cover_count": 49,
+      "existing_views_median": 1000,
+      "signals": ["low_supply", "existing_supply_checked"],
+      "playlist_videos": [{"video_id": "iF1DvoQOh8w", "title": "【最新曲】見知らぬ糸 / スピッツ cover by たのうた", "channel_title": "たのうた", "duration_seconds": 241, "view_count": 31766}]
+    },
+    {
+      "song_id": "ee864e2f04c0",
+      "title": "なんもねえ",
+      "artists": "忘れらんねえよ",
+      "chart_demand_score": 70.5,
+      "charts": {"weekly": 22, "shorts_daily": 20},
+      "recent_cover_count": 1,
+      "spread_shortform_median": 3.7572,
+      "signals": ["low_supply", "shorts_growth"],
+      "playlist_videos": [{"video_id": "141pnA088KI", "title": "忘れらんねえよ　なんもねえ　歌ってみた", "channel_title": "おてんき君", "duration_seconds": 52, "view_count": 898}]
+    }
+  ]
+}
