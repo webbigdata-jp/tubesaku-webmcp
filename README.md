@@ -49,7 +49,8 @@ This repository intentionally contains only:
 - a standalone sample demo with synthetic/sample data;
 - architecture documentation.
 
-TubeSaku's production crawlers, private database, ranking pipeline, API keys, and proprietary data-processing logic are not included.
+TubeSaku's production crawlers, private database, ranking pipeline, API keys, and proprietary data-processing logic are not included.  
+This standalone demo is the fully runnable open-source reference implementation for the submission; the production URLs demonstrate the same WebMCP interaction against TubeSaku's live data.  
 
 ## Standalone demo
 
