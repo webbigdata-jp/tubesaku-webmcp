@@ -61,7 +61,7 @@
         return element;
     }
 
-    function renderAiPicks({ heading, streams }) {
+    function renderAiPicks({ heading, streams, selection_notes = [] }) {
         const section = document.getElementById('webmcp-ai-picks');
         const headingNode = document.getElementById('webmcp-ai-picks-heading');
         const metaNode = document.getElementById('webmcp-ai-picks-meta');
@@ -74,6 +74,12 @@
         headingNode.textContent = heading || 'AI Picks';
         metaNode.textContent = `${streams.length}件をAIエージェントが選択しました`;
         listNode.replaceChildren();
+
+        const noteByVideoId = new Map(
+            (selection_notes || [])
+                .filter((note) => note && note.video_id && note.reason)
+                .map((note) => [String(note.video_id), String(note.reason)])
+        );
 
         for (const stream of streams) {
             const article = document.createElement('article');
@@ -152,6 +158,24 @@
             }
 
             body.appendChild(details);
+
+            const selectionReason = noteByVideoId.get(String(stream.video_id || ''));
+            if (selectionReason) {
+                const reasonBox = document.createElement('div');
+                reasonBox.className = 'mt-3 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2';
+                reasonBox.appendChild(createTextElement(
+                    'div',
+                    'text-[10px] font-black tracking-wide text-indigo-600 mb-1',
+                    'AIの選定理由'
+                ));
+                reasonBox.appendChild(createTextElement(
+                    'p',
+                    'text-xs leading-relaxed text-indigo-950',
+                    selectionReason
+                ));
+                body.appendChild(reasonBox);
+            }
+
             row.appendChild(body);
             article.appendChild(row);
             listNode.appendChild(article);
@@ -279,7 +303,7 @@
                 readOnlyHint: true,
                 untrustedContentHint: true,
             },
-            execute: async (input, { signal }) => {
+            execute: async (input = {}, { signal } = {}) => {
                 return await fetchLiveStreams(input, signal);
             },
         });
@@ -290,7 +314,8 @@
             description:
                 'Show live streams selected by the agent inside the TubeSaku Live Schedule page as AI Picks. ' +
                 'Call search_live_streams first. Every video_id must come from the most recent search_live_streams result. ' +
-                'Use this after comparing candidates and choosing the streams that best match the user\'s request.',
+                'Use this after comparing candidates and choosing the streams that best match the user\'s request. ' +
+                'When useful, include selection_notes so TubeSaku can show the agent\'s reason for each choice in the page UI.',
             inputSchema: {
                 type: 'object',
                 properties: {
@@ -312,6 +337,28 @@
                         maxLength: 80,
                         description: 'Short heading displayed above the selected schedule.',
                     },
+                    selection_notes: {
+                        type: 'array',
+                        maxItems: 10,
+                        description: 'Optional short agent-authored reasons for the selected streams. Use the user\'s language. Each video_id should also be present in video_ids.',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                video_id: {
+                                    type: 'string',
+                                    minLength: 6,
+                                    maxLength: 50,
+                                },
+                                reason: {
+                                    type: 'string',
+                                    minLength: 1,
+                                    maxLength: 200,
+                                },
+                            },
+                            required: ['video_id', 'reason'],
+                            additionalProperties: false,
+                        },
+                    },
                 },
                 required: ['video_ids'],
                 additionalProperties: false,
@@ -320,7 +367,7 @@
                 readOnlyHint: false,
                 untrustedContentHint: false,
             },
-            execute: async ({ video_ids, heading = 'AI Picks' }) => {
+            execute: async ({ video_ids, heading = 'AI Picks', selection_notes = [] } = {}) => {
                 const latestSearch = safeSessionGet(STORAGE_SEARCH);
                 if (!latestSearch || !Array.isArray(latestSearch.streams)) {
                     throw new Error('No TubeSaku search result is available. Run search_live_streams first.');
@@ -345,7 +392,18 @@
                     throw new Error('At least one valid video_id is required.');
                 }
 
-                const picks = { heading, streams: selected };
+                const selectedIdSet = new Set(requestedIds);
+                const normalizedNotes = [];
+                const notedIds = new Set();
+                for (const note of selection_notes || []) {
+                    const videoId = String(note?.video_id || '');
+                    const reason = String(note?.reason || '').trim().slice(0, 200);
+                    if (!selectedIdSet.has(videoId) || !reason || notedIds.has(videoId)) continue;
+                    notedIds.add(videoId);
+                    normalizedNotes.push({ video_id: videoId, reason });
+                }
+
+                const picks = { heading, streams: selected, selection_notes: normalizedNotes };
                 renderAiPicks(picks);
                 safeSessionSet(STORAGE_PICKS, picks);
 
@@ -354,6 +412,7 @@
                     heading,
                     displayed_count: selected.length,
                     video_ids: requestedIds,
+                    selection_note_count: normalizedNotes.length,
                 };
             },
         });

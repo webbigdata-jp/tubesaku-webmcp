@@ -6,6 +6,19 @@
 
   const $ = (id) => document.getElementById(id);
 
+  function safeHttpsUrl(value, allowedHosts = null) {
+    if (!value) return null;
+    try {
+      const url = new URL(value, window.location.origin);
+      if (url.protocol !== 'https:') return null;
+      if (allowedHosts && !allowedHosts.includes(url.hostname)) return null;
+      return url.href;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  const YOUTUBE_HOSTS = ['www.youtube.com', 'youtube.com', 'm.youtube.com', 'youtu.be'];
 
   let coverPlaylistState = {
     videoIds: [],
@@ -48,7 +61,11 @@
     if (prevButton) prevButton.disabled = videoIds.length <= 1;
     if (nextButton) nextButton.disabled = videoIds.length <= 1;
     if (openLink) {
-      openLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+      const watchUrl = safeHttpsUrl(
+        `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
+        YOUTUBE_HOSTS
+      );
+      if (watchUrl) openLink.href = watchUrl;
     }
   }
 
@@ -105,13 +122,14 @@
     return parts;
   }
 
-  function buildSongCard(song, playlistVideo) {
+  function buildSongCard(song, playlistVideo, selectionReason = '') {
     const article = makeElement('article', 'bg-white border border-slate-200 rounded-2xl p-3 md:p-4');
     const top = makeElement('div', 'flex gap-3');
 
-    if (song.thumbnail_url) {
+    const thumbnailUrl = safeHttpsUrl(song.thumbnail_url);
+    if (thumbnailUrl) {
       const img = document.createElement('img');
-      img.src = song.thumbnail_url;
+      img.src = thumbnailUrl;
       img.alt = song.title || '';
       img.loading = 'lazy';
       img.className = 'w-20 h-12 rounded-lg object-cover bg-slate-100 shrink-0';
@@ -147,10 +165,18 @@
     metrics.appendChild(metric('既存再生中央値', compactNumber(song.existing_views_median), 'text-purple-700'));
     article.appendChild(metrics);
 
+    if (selectionReason) {
+      const reasonBox = makeElement('div', 'mt-3 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2');
+      reasonBox.appendChild(makeElement('div', 'text-[10px] font-black tracking-wide text-indigo-600 mb-1', 'AIの選定理由'));
+      reasonBox.appendChild(makeElement('p', 'text-xs leading-relaxed text-indigo-950', selectionReason));
+      article.appendChild(reasonBox);
+    }
+
     const footer = makeElement('div', 'mt-3 flex flex-wrap items-center gap-2 text-xs');
-    if (playlistVideo) {
+    const playlistUrl = playlistVideo ? safeHttpsUrl(playlistVideo.youtube_url, YOUTUBE_HOSTS) : null;
+    if (playlistVideo && playlistUrl) {
       const playLink = document.createElement('a');
-      playLink.href = playlistVideo.youtube_url;
+      playLink.href = playlistUrl;
       playLink.target = '_blank';
       playLink.rel = 'noopener noreferrer';
       playLink.className = 'font-bold text-red-600 hover:underline';
@@ -159,9 +185,10 @@
     } else {
       footer.appendChild(makeElement('span', 'text-slate-400', '30秒以上の検証済み歌唱動画は現在候補なし'));
     }
-    if (song.search_url) {
+    const searchUrl = safeHttpsUrl(song.search_url, YOUTUBE_HOSTS);
+    if (searchUrl) {
       const searchLink = document.createElement('a');
-      searchLink.href = song.search_url;
+      searchLink.href = searchUrl;
       searchLink.target = '_blank';
       searchLink.rel = 'noopener noreferrer';
       searchLink.className = 'font-medium text-brand-600 hover:underline';
@@ -172,7 +199,7 @@
     return article;
   }
 
-  async function renderCoverPlaylist({ heading, songs }) {
+  async function renderCoverPlaylist({ heading, songs, selection_notes = [] }) {
     const section = $('webmcp-cover-playlist');
     const headingEl = $('webmcp-cover-heading');
     const summaryEl = $('webmcp-cover-summary');
@@ -187,6 +214,12 @@
     headingEl.textContent = heading || 'AI Cover Picks';
     listEl.replaceChildren();
 
+    const noteBySongId = new Map(
+      (selection_notes || [])
+        .filter((note) => note && note.song_id && note.reason)
+        .map((note) => [String(note.song_id), String(note.reason)])
+    );
+
     const selectedVideos = [];
     const usedVideoIds = new Set();
     for (const song of songs) {
@@ -198,7 +231,8 @@
         usedVideoIds.add(video.video_id);
         selectedVideos.push(video);
       }
-      listEl.appendChild(buildSongCard(song, video));
+      const selectionReason = noteBySongId.get(String(song.song_id || '')) || '';
+      listEl.appendChild(buildSongCard(song, video, selectionReason));
     }
 
     summaryEl.textContent = `${songs.length}曲をAIエージェントが選択・${selectedVideos.length}本をListening Playlistに追加`;
@@ -309,7 +343,8 @@
       description:
         'Display songs selected from the latest search_cover_songs result as AI Cover Picks on the TubeSaku page, ' +
         'and build an in-page YouTube listening playlist from validated cover videos. ' +
-        'Only song IDs returned by the latest search can be used.',
+        'Only song IDs returned by the latest search can be used. ' +
+        'When useful, include selection_notes so TubeSaku can show the agent\'s reason for each choice in the page UI.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -326,6 +361,20 @@
             maxLength: 100,
             description: 'Short title for the selected plan or listening playlist.',
           },
+          selection_notes: {
+            type: 'array',
+            maxItems: 10,
+            description: 'Optional short agent-authored reasons for the selected songs. Use the user\'s language. Each song_id should also be present in song_ids.',
+            items: {
+              type: 'object',
+              properties: {
+                song_id: { type: 'string', minLength: 8, maxLength: 40 },
+                reason: { type: 'string', minLength: 1, maxLength: 200 },
+              },
+              required: ['song_id', 'reason'],
+              additionalProperties: false,
+            },
+          },
         },
         required: ['song_ids'],
         additionalProperties: false,
@@ -334,7 +383,7 @@
         readOnlyHint: false,
         untrustedContentHint: true,
       },
-      execute: async ({ song_ids, heading = 'AI Cover Picks' }) => {
+      execute: async ({ song_ids, heading = 'AI Cover Picks', selection_notes = [] } = {}) => {
         const raw = sessionStorage.getItem(SEARCH_STORAGE_KEY);
         if (!raw) {
           throw new Error('No TubeSaku cover-song search result is available. Run search_cover_songs first.');
@@ -352,7 +401,18 @@
           throw new Error('None of the requested song IDs were present in the latest TubeSaku search result.');
         }
 
-        const payload = { heading, songs };
+        const selectedIdSet = new Set(songs.map((song) => String(song.song_id)));
+        const normalizedNotes = [];
+        const notedIds = new Set();
+        for (const note of selection_notes || []) {
+          const songId = String(note?.song_id || '');
+          const reason = String(note?.reason || '').trim().slice(0, 200);
+          if (!selectedIdSet.has(songId) || !reason || notedIds.has(songId)) continue;
+          notedIds.add(songId);
+          normalizedNotes.push({ song_id: songId, reason });
+        }
+
+        const payload = { heading, songs, selection_notes: normalizedNotes };
         await renderCoverPlaylist(payload);
         sessionStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(payload));
 
@@ -373,6 +433,7 @@
           playlist_video_count: playlistVideoIds.length,
           song_ids: songs.map((song) => song.song_id),
           playlist_video_ids: playlistVideoIds,
+          selection_note_count: normalizedNotes.length,
         };
       },
     });
